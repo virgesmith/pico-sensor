@@ -4,11 +4,19 @@ import binascii
 import json
 from temperature import temperature
 import ppwhttp
+from ujwt.jwt import Jwt
 
 
 r = 0
 g = 0
 b = 0
+device_id = binascii.hexlify(pico.id()).decode('utf-8')
+
+with open("secrets.json") as fd:
+    creds = json.load(fd)
+
+jwt = Jwt(creds["SIGNATURE_SECRET"])
+
 
 def timestamp():
     y, mth, d, h, min, s, _x, _y = time.localtime()
@@ -22,9 +30,9 @@ def get_id(method, url):
 
 @ppwhttp.route("/temp", methods=["GET"])
 def get_id(method, url):
-    return json.dumps({
-        "id": binascii.hexlify(pico.id()).decode('utf-8'),
-        "timestamp": timestamp(),
+    return jwt.encode({
+        "id": device_id,
+        "iat": time.time(),
         "temperature": temperature()
     })
     # return f"{temperature():.1f}"
@@ -56,7 +64,7 @@ def get_test(method, url):
     return "Hello World!"
 
 
-ppwhttp.start_wifi()
+ppwhttp.start_wifi(creds["WIFI_SSID"], creds["WIFI_PASS"])
 
 server_sock = ppwhttp.start_server()
 while True:

@@ -43,12 +43,6 @@ sockets = []
 hosts = {}
 
 
-with open("secrets.json") as fd:
-    creds = json.load(fd)
-    WIFI_SSID = creds["WIFI_SSID"]
-    WIFI_PASS = creds["WIFI_PASS"]
-
-
 def _ip_str(ip):
     return ".".join([str(n) for n in ip])
 
@@ -88,7 +82,7 @@ def get_host_by_name(hostname, no_cache=False):
     return ip
 
 
-def start_wifi(wifi_ssid=WIFI_SSID, wifi_pass=WIFI_PASS):
+def start_wifi(wifi_ssid, wifi_pass):
     if wifi_ssid is None or wifi_pass is None:
         raise RuntimeError("WiFi SSID/PASS required. Set them in secrets.py and copy it to your Pico, or pass them as arguments.")
     picowireless.init()

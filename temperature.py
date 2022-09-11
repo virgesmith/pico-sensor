@@ -1,5 +1,4 @@
 import machine
-import utime
 
 sensor_temp = machine.ADC(4)
 conversion_factor = 3.3 / (65535)

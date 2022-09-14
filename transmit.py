@@ -7,16 +7,34 @@ from hashlib import sha1
 import urequests as requests
 
 vccon_url = "https://fw-dt-vccon.azurewebsites.net/incoming/"
+# vccon_url = "http://192.168.178.61:8000/incoming/"
+
+INTERVAL = 300 # seconds
 
 with open("secrets.json","r") as fh:
   creds = ujson.load(fh)
 
-def make_token(data, secret):
+
+def utc_time_str() -> str:
+  """e.g. 2022-09-07T10:00:00Z"""
+  OFFSET = 3600 # gmtime=localtime
+  (y, m, d, h, min, s, _, _) = time.gmtime(time.time() - OFFSET)
+  return f"{y:04d}-{m:02d}-{d:02d}T{h:02d}:{min:02d}:{s:02d}Z"
+
+
+SENSOR_TEMP = machine.ADC(4)
+CONVERSION_FACTOR = 3.3 / (65535)
+
+
+def temperature():
+  reading = SENSOR_TEMP.read_u16() * CONVERSION_FACTOR
+  return 27 - (reading - 0.706) / 0.001721
+
+
+def make_token(data: dict, secret: str) -> str:
   m = sha1()
-  sorted_data = dict(sorted(data.items(), key=lambda item: item[0]))
-  m.update(ujson.dumps(sorted_data).encode('utf-8'))
+  m.update(ujson.dumps(data).encode('utf-8'))
   h = m.digest().hex()
-  print(h)
   return jwt.encode({"checksum": h}, secret)
 
 led = machine.Pin("LED", machine.Pin.OUT)
@@ -48,26 +66,17 @@ led.off()
 
 while True:
   led.on()
-  payload = {"device": "pico-w", "id": machine.unique_id().hex(), "value": { "temperature": 10.0 }, "timestamp": time.time()}
+  payload = {"device": "pico-w", "id": machine.unique_id().hex(), "timestamp": utc_time_str(), "value": { "temperature": temperature() }}
   token = make_token(payload, creds["FW_VCCON_SIGNATURE_SECRET"])
-  print(token)
-  headers = {'x-fw-signature': token} #'accept': 'application/json', 'Content-Type': 'application/json' }
+  headers = {'x-fw-signature': token }
 
   try:
-    print("sending...")
-    response = requests.post(vccon_url, headers=headers, data=ujson.dumps(payload))
-    print("sent (" + str(response.status_code) + "), status = " + str(wlan.status()) )
+    # print(f"sending {ujson.dumps(payload)}")
+    response = requests.post(vccon_url, headers=headers, json=payload)
+    # print("sent (" + str(response.status_code) + "), status = " + str(wlan.status()) )
     response.close()
   except Exception as e:
-    print(f"{e} could not connect (status =" + str(wlan.status()) + ")")
-    if wlan.status() < 0 or wlan.status() >= 3:
-      print("trying to reconnect...")
-      wlan.disconnect()
-      wlan.connect(ssid, password)
-      if wlan.status() == 3:
-        print('connected')
-      else:
-        print('failed')
+    print(f"{e.__class__.__name__} {e} (WLAN status={wlan.status()})")
   led.off()
-  time.sleep(15)
+  time.sleep(INTERVAL)
 

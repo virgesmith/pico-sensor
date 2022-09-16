@@ -44,6 +44,8 @@ wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 wlan.connect(creds["WIFI_SSID"], creds["WIFI_PASS"])
 
+# TODO set time from ntp
+
 # Wait for connect or fail
 max_wait = 10
 while max_wait > 0:
@@ -66,7 +68,8 @@ led.off()
 
 while True:
   led.on()
-  payload = {"device": "pico-w", "id": machine.unique_id().hex(), "timestamp": utc_time_str(), "value": { "temperature": temperature() }}
+  # TODO add timestamp...
+  payload = {"device": "pico-w", "id": machine.unique_id().hex(), "value": { "temperature": temperature() }}
   token = make_token(payload, creds["FW_VCCON_SIGNATURE_SECRET"])
   headers = {'x-fw-signature': token }
 

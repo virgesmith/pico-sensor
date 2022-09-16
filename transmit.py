@@ -1,5 +1,7 @@
 import time
+import ntptime
 import machine
+import rp2
 import network
 import ujson
 import jwt
@@ -17,8 +19,7 @@ with open("secrets.json","r") as fh:
 
 def utc_time_str() -> str:
   """e.g. 2022-09-07T10:00:00Z"""
-  OFFSET = 3600 # gmtime=localtime
-  (y, m, d, h, min, s, _, _) = time.gmtime(time.time() - OFFSET)
+  (y, m, d, h, min, s, _, _) = time.gmtime()
   return f"{y:04d}-{m:02d}-{d:02d}T{h:02d}:{min:02d}:{s:02d}Z"
 
 
@@ -40,11 +41,10 @@ def make_token(data: dict, secret: str) -> str:
 led = machine.Pin("LED", machine.Pin.OUT)
 led.on()
 
+rp2.country("GB")
 wlan = network.WLAN(network.STA_IF)
 wlan.active(True)
 wlan.connect(creds["WIFI_SSID"], creds["WIFI_PASS"])
-
-# TODO set time from ntp
 
 # Wait for connect or fail
 max_wait = 10
@@ -54,7 +54,6 @@ while max_wait > 0:
   max_wait -= 1
   print('waiting for connection...')
   time.sleep(1)
-
 
 # Handle connection error
 if wlan.status() != 3:
@@ -66,10 +65,13 @@ else:
 
 led.off()
 
+# set time from ntp
+ntptime.settime()
+
 while True:
   led.on()
   # TODO add timestamp...
-  payload = {"device": "pico-w", "id": machine.unique_id().hex(), "value": { "temperature": temperature() }}
+  payload = {"device": "pico-w", "id": machine.unique_id().hex(), "value": { "temperature": temperature() }, "timestamp": utc_time_str() }
   token = make_token(payload, creds["FW_VCCON_SIGNATURE_SECRET"])
   headers = {'x-fw-signature': token }
 

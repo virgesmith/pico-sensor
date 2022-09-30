@@ -8,28 +8,13 @@ import jwt
 from hashlib import sha1
 import urequests as requests
 
+from sensors import temperature
+from utils import secrets, utc_time_str
+
 vccon_url = "https://fw-dt-vccon.azurewebsites.net/incoming/"
 # vccon_url = "http://192.168.178.61:8000/incoming/"
 
 INTERVAL = 300 # seconds
-
-with open("secrets.json","r") as fh:
-  creds = ujson.load(fh)
-
-
-def utc_time_str() -> str:
-  """e.g. 2022-09-07T10:00:00Z"""
-  (y, m, d, h, min, s, _, _) = time.gmtime()
-  return f"{y:04d}-{m:02d}-{d:02d}T{h:02d}:{min:02d}:{s:02d}Z"
-
-
-SENSOR_TEMP = machine.ADC(4)
-CONVERSION_FACTOR = 3.3 / (65535)
-
-
-def temperature():
-  reading = SENSOR_TEMP.read_u16() * CONVERSION_FACTOR
-  return 27 - (reading - 0.706) / 0.001721
 
 
 def make_token(data: dict, secret: str) -> str:
@@ -40,6 +25,8 @@ def make_token(data: dict, secret: str) -> str:
 
 led = machine.Pin("LED", machine.Pin.OUT)
 led.on()
+
+creds = secrets()
 
 rp2.country("GB")
 wlan = network.WLAN(network.STA_IF)

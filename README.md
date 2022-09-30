@@ -47,7 +47,6 @@ Run the file `test_transmit.py` locally (noting your ip address). You may need t
 
 ### TODO
 
-- [ ] set unique hostname once micropython allows this. Currently hard-coded to `PYBD`.
+- [X] set unique hostname once micropython allows this. Currently hard-coded to `PYBD`. Temporary fix implemented [here](https://github.com/virgesmith/micropython)
 - [X] set clock once connected to network. (Currently message is timestamped by the forwarding service.)
 - [ ] add other sensors to the pico: VOCs, PMx
-

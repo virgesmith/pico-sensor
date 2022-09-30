@@ -1,4 +1,7 @@
 .venv*
 secrets.*
-
+build
 micropython-jwt
+
+pico_sdk_import.cmake
+pico-sdk

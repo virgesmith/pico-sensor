@@ -1,17 +1,19 @@
 import machine
 import time
-import ujson
+# import ujson
+import binascii
 
 from umqtt.simple import MQTTClient
 
 import wifi
 from sensors import temperature
 from utils import secrets, utc_time_str
+import jwt
 
 broker = "azpi4"
-topic = "test"
+topic = "iaq"
 
-INTERVAL = 3 # seconds
+INTERVAL = 60 # seconds
 
 
 wifi.connect()
@@ -30,14 +32,18 @@ payload = {
   "value": { "temperature": 0.0 },
   "timestamp": ""
 }
+secret = binascii.a2b_base64(secrets()["SIGNATURE_SECRET"])
 
 led = machine.Pin("LED", machine.Pin.OUT)
+
 
 while True:
   led.on()
   payload["value"]["temperature"] = temperature()
   payload["timestamp"] = utc_time_str()
-  client.publish(topic, ujson.dumps(payload))
+  token = jwt.encode(payload, secret, algorithm='HS256')
+
+  client.publish(topic, token)
   led.off()
   time.sleep(INTERVAL)
 

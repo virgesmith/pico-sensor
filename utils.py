@@ -1,10 +1,12 @@
 import time
-import ujson
-
+try:
+  import ujson as json
+except:
+  import json
 
 def secrets():
   with open("secrets.json","r") as fh:
-    creds = ujson.load(fh)
+    creds = json.load(fh)
   return creds
 
 

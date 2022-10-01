@@ -1,6 +1,11 @@
+import base64
 import paho.mqtt.client as mqtt
-import json
 
+import jwt
+
+from utils import secrets
+
+key = base64.b64decode(secrets()["SIGNATURE_SECRET"])
 
 def on_connect(client, userdata, message, return_code):
     """
@@ -18,8 +23,10 @@ def on_connect(client, userdata, message, return_code):
 
     # This will be called once the client connects
     print(f"Connected with result code {return_code}")
-    # Subscribe here!
-    client.subscribe("test")
+    # Subscribe
+    for topic in userdata["topics"]:
+        print(f"subscribing to: {topic}")
+        client.subscribe(topic)
 
 def on_message(client, userdata, message):
     """
@@ -35,19 +42,19 @@ def on_message(client, userdata, message):
         This is a class with members topic, payload, qos, retain.
     """
     print(f"Message received [{message.topic}]:")
-    print(json.dumps(json.loads(message.payload), indent=2))
+    try:
+        data = jwt.decode(message.payload, key, algorithms=['HS256'])
+    except jwt.PyJWTError as e:
+        print(e)
+    else:
+        print(data)
 
 
 mqtt_broker ="azpi4"
 
-client = mqtt.Client("mqtt-test-subscriber")
+client = mqtt.Client("mqtt-test-subscriber", userdata={"topics": ["iaq"]})
 client.on_connect = on_connect
 client.on_message = on_message
 client.connect(mqtt_broker)
 client.loop_forever()  # Start networking daemon
-
-# while True:
-#     client.subscribe("test") #, randNumber)
-#     print(f"published {randNumber} to topic test")
-#     time.sleep(1)
 

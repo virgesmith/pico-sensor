@@ -36,7 +36,7 @@ def connect():
   # set time from ntp
   ntptime.settime()
   ip = wlan.ifconfig()[0]
-  print(f'{utc_time_str()} connected, IP: {ip}')
+  print(f'{utc_time_str()}: {machine.unique_id().hex()} connected, IP: {ip}')
 
   led.off()
 

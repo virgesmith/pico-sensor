@@ -52,9 +52,14 @@ def on_message(client, userdata, message):
 
 mqtt_broker ="azpi4"
 
+# SSL/TLS based on
+# http://www.steves-internet-guide.com/mosquitto-tls/
+# https://www.petecodes.co.uk/connecting-a-raspberry-pi-pico-w-to-microsoft-azure-iot-hub-using-micropython-and-mqtt/
+
 client = mqtt.Client("mqtt-test-subscriber", userdata={"topics": ["iaq"]})
+client.tls_set("./tls/ca.crt")
 client.on_connect = on_connect
 client.on_message = on_message
-client.connect(mqtt_broker)
+client.connect(mqtt_broker, port=8883)
 client.loop_forever()  # Start networking daemon
 

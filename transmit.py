@@ -28,7 +28,10 @@ def make_token(data: dict, secret: str) -> str:
 
 
 def mqtt_connect():
-  client = MQTTClient(machine.unique_id().hex(), mqtt_broker, keepalive=3600)
+  print('loading SSL certificate')
+  with open("./ca.crt", 'r') as f:
+    cert = f.read()
+  client = MQTTClient(machine.unique_id().hex(), mqtt_broker, keepalive=3600, ssl=True, ssl_params={"cert": cert})
   client.connect()
   print(f'Connected to {mqtt_broker} MQTT Broker')
   return client

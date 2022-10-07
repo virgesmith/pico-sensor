@@ -4,8 +4,8 @@ import paho.mqtt.client as mqtt
 import jwt
 
 from utils import secrets
-
-key = base64.b64decode(secrets()["SIGNATURE_SECRET"])
+print(secrets())
+key = base64.b64decode(secrets()["FW_MQTT_SECRET"])
 
 def on_connect(client, userdata, message, return_code):
     """
